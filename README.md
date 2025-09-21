@@ -51,12 +51,12 @@ A web-based Python-powered terminal that mimics shell commands with additional f
 ---
 
 ## 🌐 Deployment
-The project can be deployed using [Render](https://render.com) or [PythonAnywhere](https://www.pythonanywhere.com/).  
+The project is deployed using [Render](https://bitpipe-terminal.onrender.com)  
 
 ---
 
 ## 📹 Demo
-[Link to Demo Video (to be added later)]
+[Watch Demo Video](https://drive.google.com/file/d/1BFDY-LYu1WSgZ56oA7MGdPX0pEqtyb2w/view?usp=sharing)
 
 ---
 
