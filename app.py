@@ -2,17 +2,17 @@ import os
 import shutil
 import subprocess
 import glob
-import psutil  # <-- NEW: Import for system monitoring
-from flask import Flask, request, jsonify
+import psutil  # <-- Import for system monitoring
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 
 # Initialize the Flask application
 app = Flask(__name__)
-# Enable Cross-Origin Resource Sharing (CORS) to allow the frontend to communicate with this backend
-CORS(app)
+CORS(app)  # Enable CORS
 
-# Store the current working directory in memory.
+# Store the current working directory in memory
 current_directory = os.path.expanduser("~")
+
 
 def execute_command(command):
     """
@@ -21,15 +21,17 @@ def execute_command(command):
     """
     global current_directory
     parts = command.strip().split()
+    if not parts:
+        return "", current_directory
+
     cmd = parts[0]
     args = parts[1:]
 
     try:
         if cmd == "pwd":
             return current_directory, current_directory
-        
+
         elif cmd == "ls":
-            # Using -lha for detailed, human-readable output
             result = subprocess.run(['ls', '-lha'] + args, cwd=current_directory, capture_output=True, text=True)
             return result.stdout + result.stderr, current_directory
 
@@ -38,7 +40,7 @@ def execute_command(command):
                 path = os.path.expanduser("~")
             else:
                 path = os.path.expanduser(os.path.join(current_directory, args[0]))
-            
+
             if os.path.isdir(path):
                 current_directory = os.path.abspath(path)
                 return f"Changed directory to {current_directory}", current_directory
@@ -60,16 +62,16 @@ def execute_command(command):
                 return "rm: missing operand", current_directory
             path = os.path.join(current_directory, args[0])
             if not os.path.exists(path):
-                 return f"rm: cannot remove '{args[0]}': No such file or directory", current_directory
-            
+                return f"rm: cannot remove '{args[0]}': No such file or directory", current_directory
+
             try:
                 if os.path.isfile(path):
                     os.remove(path)
                     return f"Removed file: {args[0]}", current_directory
                 elif os.path.isdir(path) and not args:
-                    shutil.rmtree(path) # Use shutil for directories
+                    shutil.rmtree(path)
                     return f"Removed directory: {args[0]}", current_directory
-                else: # Handle rm -r for directories
+                else:
                     if args[0] == '-r' and len(args) > 1:
                         path = os.path.join(current_directory, args[1])
                         if os.path.isdir(path):
@@ -79,7 +81,7 @@ def execute_command(command):
             except OSError as e:
                 return f"rm: cannot remove '{args[0]}': {e.strerror}", current_directory
 
-        # --- NEW FEATURE: SYSTEM STATUS ---
+        # --- SYSTEM STATUS ---
         elif cmd == "status":
             cpu_usage = psutil.cpu_percent(interval=1)
             memory_info = psutil.virtual_memory()
@@ -97,8 +99,8 @@ def execute_command(command):
         else:
             safe_commands = ['echo', 'touch', 'cat', 'head', 'tail', 'grep']
             if cmd in safe_commands:
-                 result = subprocess.run(parts, cwd=current_directory, capture_output=True, text=True)
-                 return result.stdout + result.stderr, current_directory
+                result = subprocess.run(parts, cwd=current_directory, capture_output=True, text=True)
+                return result.stdout + result.stderr, current_directory
             else:
                 return f"Command not found: {cmd}", current_directory
 
@@ -106,9 +108,11 @@ def execute_command(command):
         return str(e), current_directory
 
 
+# ---- ROUTES ----
+
 @app.route("/")
 def home():
-    return "🚀 BitPipe Terminal backend is live! Use /execute or /autocomplete endpoints."
+    return render_template("index.html")  # Serve terminal HTML
 
 
 @app.route('/execute', methods=['POST'])
@@ -119,7 +123,7 @@ def handle_execute():
         return jsonify({"error": "No command provided"}), 400
 
     output, pwd = execute_command(command)
-    
+
     home_dir = os.path.expanduser("~")
     if pwd.startswith(home_dir):
         display_pwd = "~" + pwd[len(home_dir):]
@@ -135,7 +139,7 @@ def handle_autocomplete():
     data = request.json
     text = data.get('text', '')
     path_to_complete = text.split(' ')[-1]
-    
+
     if path_to_complete.startswith('~'):
         path_to_complete = os.path.expanduser('~') + path_to_complete[1:]
 
@@ -143,7 +147,7 @@ def handle_autocomplete():
     full_path_pattern = os.path.join(base_dir, path_to_complete) + '*'
 
     matches = glob.glob(full_path_pattern)
-    
+
     completions = []
     for match in matches:
         completion = os.path.basename(match)
