@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 import glob
-import psutil # <-- NEW: Import for system monitoring
+import psutil  # <-- NEW: Import for system monitoring
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -105,6 +105,12 @@ def execute_command(command):
     except Exception as e:
         return str(e), current_directory
 
+
+@app.route("/")
+def home():
+    return "🚀 BitPipe Terminal backend is live! Use /execute or /autocomplete endpoints."
+
+
 @app.route('/execute', methods=['POST'])
 def handle_execute():
     data = request.json
@@ -121,6 +127,7 @@ def handle_execute():
         display_pwd = pwd
 
     return jsonify({"output": output, "pwd": display_pwd})
+
 
 @app.route('/autocomplete', methods=['POST'])
 def handle_autocomplete():
@@ -149,4 +156,3 @@ def handle_autocomplete():
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)
-
