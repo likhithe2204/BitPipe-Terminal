@@ -51,7 +51,7 @@ A web-based Python-powered terminal that mimics shell commands with additional f
 ---
 
 ## 🌐 Deployment
-The project can be deployed using [Render](https://render.com) or [PythonAnywhere](https://www.pythonanywhere.com/).  
+The project is deployed using [Render](https://bitpipe-terminal.onrender.com)
 
 ---
 
